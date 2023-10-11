@@ -1,0 +1,19 @@
+.container {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.audio {
+  background-color: #3498db; /* Cor da linha do tempo de áudio */
+  height: 40px; /* Ajuste a altura da linha do tempo conforme necessário */
+  width: 100%;
+  margin: 10px;
+}
+
+.marker {
+  width: 100%;
+  background-color: #e74c3c; /* Cor dos marcadores */
+  cursor: pointer;
+}

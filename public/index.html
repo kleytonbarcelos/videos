@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Inclua os links para o jQuery e Bootstrap -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    .audio {
+      background-color: #3498db; /* Cor da linha do tempo de áudio */
+      height: 40px; /* Ajuste a altura da linha do tempo conforme necessário */
+      width: 100%;
+      margin: 10px;
+    }
+
+    .markers-container {
+      display: flex;
+      background-color: #f0f0f0;
+    }
+
+    .marker {
+      cursor: pointer;
+      width: 100%; /* Cada div colorida ocupa 100% da largura da div pai */
+      height: 30px;
+      margin: 5px 0;
+    }
+
+    .modal {
+      display: none;
+    }
+
+
+    #waveform {
+  width: 100%;
+  height: 200px; /* Ajuste a altura conforme necessário */
+}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+  <div class="markers-container"></div>
+  <div class="audio"></div>
+  <button id="addMarker" class="btn btn-primary mt-3">Adicionar Marcador</button>
+</div>
+  
+  <!-- Modal para definir o tamanho do marcador -->
+  <div class="modal fade" id="markerSizeModal" tabindex="-1" aria-labelledby="markerSizeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="markerSizeModalLabel">Definir Tamanho do Marcador</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="number" id="markerSizeInput" class="form-control" placeholder="Digite a largura em pixels">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          <button type="button" class="btn btn-primary" id="applySize">Aplicar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    $(document).ready(function() {
+      $('#addMarker').click(function() {
+        const randomColor = getRandomColor();
+        const $newMarker = $('<div class="marker"></div>').css('background-color', randomColor);
+        $('.markers-container').append($newMarker);
+      });
+
+      // Defina um marcador para edição ao clicar duas vezes
+      $('.markers-container').on('dblclick', '.marker', function() {
+        const $marker = $(this);
+        console.log( $marker.width() )
+        $('#markerSizeInput').val($marker.width()); // Exibe a largura atual no modal
+        $('#markerSizeModal').modal('show');
+        $('#applySize').data('marker', $marker); // Armazena o marcador no botão de aplicação
+      });
+
+      // Aplique a largura definida pelo usuário ao marcador
+      $('#applySize').click(function() {
+        const $marker = $(this).data('marker');
+        const newWidth = $('#markerSizeInput').val();
+        $marker.css('width', newWidth + 'px');
+        $('#markerSizeModal').modal('hide');
+      });
+    });
+  </script>
+
+
+
+
+<input type="file" id="audioInput" accept="audio/*">
+<canvas id="waveform"></canvas>
+
+
+  <script>
+    $(document).ready(function() {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const canvas = document.getElementById('waveform');
+  const canvasContext = canvas.getContext('2d');
+  const audioInput = document.getElementById('audioInput');
+
+  // Ajusta o tamanho do canvas quando a janela é redimensionada
+  window.addEventListener('resize', resizeCanvas);
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    drawWaveform(); // Redesenha as formas de onda quando o tamanho é ajustado
+  }
+
+  // Chamada para ajustar o tamanho inicial do canvas
+  resizeCanvas();
+
+  function drawWaveform() {
+    const width = canvas.width;
+    const height = canvas.height;
+    canvasContext.clearRect(0, 0, width, height);
+    canvasContext.strokeStyle = 'blue';
+    canvasContext.lineWidth = 2;
+
+    if (audioInput.files.length === 0) {
+      return;
+    }
+
+    const file = audioInput.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      audioContext.decodeAudioData(e.target.result, function(buffer) {
+        const channelData = buffer.getChannelData(0); // Use os dados do primeiro canal de áudio
+
+        canvasContext.beginPath();
+        for (let i = 0; i < channelData.length; i++) {
+          const x = (i / channelData.length) * width;
+          const y = (0.5 + channelData[i] * 0.5) * height;
+          if (i === 0) {
+            canvasContext.moveTo(x, y);
+          } else {
+            canvasContext.lineTo(x, y);
+          }
+        }
+        canvasContext.stroke();
+      });
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  // Atualiza as formas de onda ao selecionar um arquivo de áudio
+  audioInput.addEventListener('change', drawWaveform);
+});
+
+  </script>
+</body>
+</html>
